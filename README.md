@@ -1,6 +1,9 @@
 # Leveraging Deep Learning for Player Position Recognition in Football
 In this project, we harness the power of computer vision to tackle a fascinating task from the world of sports: classifying football players into specific groups based on their in-game positions. Using machine learning techniques and image processing, our goal is to identify and categorize players into one of the five classes: Quarterback (QB), Defensive Back (DB), Skill Positions (SKILL), Linebacker (LB), and Center (C). This is a crucial task in sports analytics and player performance assessment.
 
+## DEMO
+See [here](https://drive.google.com/file/d/115jX_ccezvIqLu0Y2a-PKe8a0oqnJ1rG/view) for a quick demo.
+
 ## Data Used
 The dataset was collected and prepared from Roboflow, found [here](https://universe.roboflow.com/bronkscottema/football-players-zm06l/dataset/15). It consists of images of players in action, with annotations for player positions. The data is divided into training, validation, and test sets for model development and evaluation. Each instance in our dataset consists of an image and corresponding annotations. These annotations specify the bounding box for each player (given by 'xmin', 'ymin', 'xmax', 'ymax') and the player's class (one of QB, DB, SKILL, LB, C). See the _annotations.csv files for more info.
 
@@ -35,3 +38,5 @@ Our model's implementation involved integrating existing methodologies and addin
 
 ## Results
 Our model demonstrates promising results in identifying player positions, underlining the potential of deep learning for such tasks. However, there is more work to be done. Currently we are getting around 0.75-0.80 accuracy on our predictions in the validation set, which can be improved. More extensive hyperparameter tuning may be necessary to increase the accuracy, and in the future we can also experiment with other preprocessing techniques such as grayscaling, using different pretrained models for our base layering, or even changing our custom layers on top. Additionally, our model seems to still be overfitting our training data, so there is room to improve on that field as well.
+
+Another large feature we could add is player detection in new images. Currently, our model is able to predict player positions GIVEN a bounding box for a particular player and the overall image. However, adding a different player detection algorithm would allow us to simply feed a raw image of the football play, and draw bounding boxes around players using this new algorithm and identify their positions using the model we already have now. However, this was outside of the scope of our project, and we did not get the time to finish this.
