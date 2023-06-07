@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Flatten, Dense, Dropout
 from tensorflow.keras.models import Model
 from tensorflow.keras.applications import VGG16
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from PIL import Image
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 # Define constants
 img_width, img_height = 64, 64
@@ -16,15 +16,26 @@ train_epochs = 10
 retrain_epochs = 20
 batch_size = 64
 input_shape = (img_width, img_height, 3)
-
+train_dir = 'train'
+val_dir = 'valid'
+test_dir = 'test'
 
 class DataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, folder_name, batch_size=batch_size):
+    def __init__(self, folder_name, batch_size=batch_size, is_training=False):
         self.annotations = pd.read_csv(
             os.path.join(folder_name, '_annotations.csv'))
         self.folder_name = folder_name
         self.batch_size = batch_size
         self.classes = ['QB', 'DB', 'SKILL', 'LB', 'C']  # list of all classes
+        self.is_training = is_training
+        self.data_gen = ImageDataGenerator(
+            rotation_range=20,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            shear_range=0.2,
+            zoom_range=0.2,
+            horizontal_flip=True,
+            fill_mode='nearest')
 
     def __len__(self):
         return int(np.ceil(len(self.annotations) / float(self.batch_size)))
@@ -41,6 +52,10 @@ class DataGenerator(tf.keras.utils.Sequence):
             xmin, ymin, xmax, ymax = row['xmin'], row['ymin'], row['xmax'], row['ymax']
             cropped_img = cv2.resize(
                 img[ymin:ymax, xmin:xmax], (img_width, img_height))
+
+            if self.is_training:
+                cropped_img = self.data_gen.random_transform(cropped_img)
+                
             data.append(cropped_img)
             labels.append(self.classes.index(row['class']))
 
@@ -51,9 +66,9 @@ class DataGenerator(tf.keras.utils.Sequence):
 
 
 # Create data generators
-train_generator = DataGenerator('train')
-val_generator = DataGenerator('valid')
-test_generator = DataGenerator('test')
+train_generator = DataGenerator(train_dir, is_training=False)
+val_generator = DataGenerator(val_dir)
+test_generator = DataGenerator(test_dir)
 
 # Load the VGG16 network, ensuring the head FC layer sets are left off
 base_model = VGG16(weights='imagenet', include_top=False,
@@ -104,27 +119,3 @@ print('Test accuracy:', score[1])
 
 # Save the model in the new format
 model.save('final_model', save_format='tf')
-
-# Define position colors
-# 'QB', 'DB', 'SKILL', 'LB', 'C'
-colors = {
-    'QB': (0, 0, 255),    # Red
-    'DB': (255, 0, 0),  # Blue
-    'LB': (0, 255, 0),  # Green
-    'SKILL' : (230,230,250), # Purple
-    'QB' : (255, 165, 0) # Orange
-}
-
-image = Image.open('test1.jpeg') # empty image file here
-
-processed_image = image.resize((64,64))
-
-newImg = model.predict(processed_image)
-
-for i in range(64):
-    for j in range(64):
-        currPos = np.argmax(newImg[i,j])
-        color = colors[currPos]
-        image[i,j] = color
-
-cv2.imshow(image)
